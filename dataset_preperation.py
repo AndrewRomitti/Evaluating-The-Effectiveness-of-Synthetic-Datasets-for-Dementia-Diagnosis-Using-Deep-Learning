@@ -8,7 +8,7 @@ dummy_son = {
 		]
 }
 
-for subdir in os.listdir(/mydata/Data):
+for subdir in sorted(os.listdir(/mydata/Data)):
 	for file in os.listdir(/mydata/Data/subdir):
 		dummy_son["labels"].append([subdir/file, os.listdir(/mydata/Data/).index(subdir)])
 
