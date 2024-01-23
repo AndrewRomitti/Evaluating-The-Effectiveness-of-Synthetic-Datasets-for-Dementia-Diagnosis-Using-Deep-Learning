@@ -1,5 +1,7 @@
 print("Starting Notebook")
 
+
+#Importing the hugging face library
 try:
   import datasets, evaluate, transformers
 except:
@@ -20,16 +22,17 @@ weights = 1./y_axis
 
 import datasets
 
-#If training GAN
+#Creating train dataset from the GAN
 ds = datasets.load_dataset("imagefolder", data_dir=r"/mydata/Synthetic_25")
 ds = ds["train"]
 ds_train = ds["train"]
 
-#If training Real Data
+#Creating test dataset from the real images
 ds_real = datasets.load_dataset("imagefolder", data_dir=PATH)
 ds_train = ds_real["train"].shuffle(seed=1)
 ds_train = ds_real["train"].train_test_split(test_size=0.2)
 ds_test = ds_real["test"]
+
 
 checkpoint = "facebook/deit-base-distilled-patch16-224"
 
@@ -37,6 +40,8 @@ image_processor = transformers.AutoImageProcessor.from_pretrained(checkpoint, re
 
 len(ds_train)
 
+
+#Transformations on Dataset
 import torch
 import torchvision.transforms as T
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize
@@ -73,9 +78,13 @@ def test_transforms(example):
 ds_train = ds_train.with_transform(train_transforms)
 ds_test = ds_test.with_transform(test_transforms)
 
+
+
+#Evaluations
 import evaluate
 import numpy as np
 
+#Loading f1 and accuracy, but this script just focuses on accuracy
 f1 = evaluate.load("f1")
 accuracy = evaluate.load("accuracy")
 
@@ -84,6 +93,7 @@ def compute_metrics(eval_pred):
     predictions = np.argmax(logits, axis=-1)
     return {"accuracy": np.mean(predictions == labels)}
 
+#preparing label2id for model preperation
 labels = ds_train.features["label"].names
 label2id, id2label = dict(), dict()
 for i, label in enumerate(labels):
@@ -92,6 +102,7 @@ for i, label in enumerate(labels):
 
 data_collator = transformers.DefaultDataCollator(return_tensors="pt")
 
+#Creating model
 model = transformers.DeiTForImageClassification.from_pretrained(checkpoint,
                                num_labels=len(labels),
                                id2label=id2label,
@@ -99,10 +110,12 @@ model = transformers.DeiTForImageClassification.from_pretrained(checkpoint,
                                ignore_mismatched_sizes=True,
                                )
 
+#Adding dropout to the hidden layers and attention layers to reduce overfitting
 model.config = transformers.DeiTConfig(hidden_dropout_prob=0.1, attention_probs_dropout_prob = 0.1)
 
 model = model.to("cuda")
 
+#Returns class weights from 0-1 when given the number of images for each class
 def compute_class_weights(class_counts):
   updated_counts = []
   total = sum(y_axis)
@@ -115,20 +128,27 @@ class_weights = torch.tensor(compute_class_weights(y_axis),dtype=torch.float)
 
 import torch.nn as nn
 
+#Overwriting the trainer class
 class WeightedTransformer(transformers.Trainer):
 
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
 
+  #overwriting the loss function
   def compute_loss(self, model, inputs, return_outputs=False):
         labels = inputs.get("labels")
-        # forward pass
         outputs = model(**inputs)
         logits = outputs.get("logits")
-        # compute custom loss (suppose one has 3 labels with different weights)
+        # compute custom loss, new loss functions now has the weight parameter which is given the classes weights
         loss_fct = nn.CrossEntropyLoss(weight=class_weights.to("cuda" if torch.cuda.is_available() else "cpu"))
         loss = loss_fct(logits, labels)
         return (loss, outputs) if return_outputs else loss
+
+
+#Creating training arguments
+#remove_unused_columns=False is required for image training
+#weight_decay reduces overfitting
+#warmup allows time for convergence before reducing lr
 
 args = transformers.TrainingArguments(
     output_dir="alzheimer_model_aug_deit60",
@@ -162,6 +182,7 @@ from transformers.optimization import Adafactor, AdafactorSchedule
 optimizer = Adafactor(model.parameters(), scale_parameter=True, relative_step=True, warmup_init=True, lr=None)
 lr_scheduler = AdafactorSchedule(optimizer)
 
+#Initalizing Trainer
 trainer = WeightedTransformer(
     model=model,
     args=args,
@@ -169,9 +190,10 @@ trainer = WeightedTransformer(
     train_dataset=ds_train,
     eval_dataset=ds_test,
     tokenizer=image_processor,
-    compute_metrics=compute_metrics, #If numbers are dissapointing delete this line of code
+    compute_metrics=compute_metrics
 )
 
+#Training Model
 trainer.train()
 
 
