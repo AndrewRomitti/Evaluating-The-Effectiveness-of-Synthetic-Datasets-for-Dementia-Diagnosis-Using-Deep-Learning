@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cd /mydata
+cp -r /mydata/Data /mydata/Data_Copy
 
 echo "What dataset split would you like to create? Please type: 25%"
 read $decision
