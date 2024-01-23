@@ -11,25 +11,12 @@ Original file is located at
 
 print("Starting Notebook")
 
-from google.colab import drive
-
-drive.mount('/content/drive')
-
 try:
   import datasets, evaluate, transformers
 except:
   !pip install transformers datasets evaluate transformers[torch] > /dev/null 2>$1
   import datasets, evaluate, transformers
   print("Successfully installed libraries")
-
-import os
-
-PATH = r"/content/Data/"
-
-for dir in os.listdir(PATH):
-  print(dir)
-
-os.listdir('/content/Data')
 
 import os
 import matplotlib.pyplot as plt
@@ -45,12 +32,13 @@ weights = 1./y_axis
 import datasets
 
 #If training GAN
-ds = datasets.load_dataset("imagefolder", data_dir=r"/content/Data")
+ds = datasets.load_dataset("imagefolder", data_dir=r"/mydata/Synthetic_25")
 ds = ds["train"].train_test_split(test_size=0.2)
+ds_train = ds["train"]
 
 #If training Real Data
-#ds = datasets.load_dataset("imagefolder", data_dir=r'/content/Alzheimer_s Dataset')
-ds_train = ds["train"].shuffle(seed=1)
+ds_real = datasets.load_dataset("imagefolder", data_dir=PATH)
+#ds_train = ds["train"].shuffle(seed=1)
 ds_test = ds["test"]
 
 checkpoint = "facebook/deit-base-distilled-patch16-224"
@@ -92,8 +80,8 @@ def test_transforms(example):
   del example["image"]
   return example
 
-ds["train"] = ds["train"].with_transform(train_transforms)
-ds["test"] = ds["test"].with_transform(test_transforms)
+ds_train = ds_train.with_transform(train_transforms)
+ds_test = ds_test.with_transform(test_transforms)
 
 import evaluate
 import numpy as np
@@ -106,7 +94,7 @@ def compute_metrics(eval_pred):
     predictions = np.argmax(logits, axis=-1)
     return {"accuracy": np.mean(predictions == labels)}
 
-labels = ds["train"].features["label"].names
+labels = ds_train.features["label"].names
 label2id, id2label = dict(), dict()
 for i, label in enumerate(labels):
     label2id[label] = str(i)
@@ -124,16 +112,6 @@ model = transformers.DeiTForImageClassification.from_pretrained(checkpoint,
 model.config = transformers.DeiTConfig(hidden_dropout_prob=0.1, attention_probs_dropout_prob = 0.1)
 
 model = model.to("cuda")
-
-temp = y_axis[2]
-temp_2 = y_axis[3]
-
-y_axis[3] = y_axis[0]
-y_axis[2] = temp_2
-y_axis[0] = y_axis[1]
-y_axis[1] = temp
-
-y_axis
 
 def compute_class_weights(class_counts):
   updated_counts = []
@@ -198,8 +176,8 @@ trainer = WeightedTransformer(
     model=model,
     args=args,
     data_collator=data_collator,
-    train_dataset=ds["train"],
-    eval_dataset=ds["test"],
+    train_dataset=ds_train,
+    eval_dataset=ds_test,
     tokenizer=image_processor,
     compute_metrics=compute_metrics, #If numbers are dissapointing delete this line of code
 )
