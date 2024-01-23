@@ -1,7 +1,7 @@
 import shutil
 import os
 
-PATH = "/mydata/Data/"
+PATH = "/mydata/Data_Copy/"
 DEST = "/mydata/Synthetic_25"
 
 DEST_SUB_DIRS = os.listdir(DEST)
