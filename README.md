@@ -26,7 +26,7 @@ To run the code to create the stylegan network, ensure that you have a kaggle.js
 ```
 bash train_gan.sh
 ```
-While the paper trained the GAN on 3000 kimgs, this code will train it for the ideal 5000 kimgs to replicate ideal results. If you want more similar results to the paper then I would recommend manually changing the kimgs to 3000.
+While the paper trained the GAN on 3000 kimgs, for ideal results we would recommend training it for 5000kimgs or more. The default code in the train_gan bash file is set to 3000 in order to replicate the results of the paper.
 
 ### Creating Synthetic Datasets
 
