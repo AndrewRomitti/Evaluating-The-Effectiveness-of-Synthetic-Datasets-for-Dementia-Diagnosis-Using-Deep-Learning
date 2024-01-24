@@ -37,6 +37,6 @@ cd stylegan3
 python3 dataset_tool.py --source=/mydata/Data/ --dest=/mydata/final_dataset/oasisdataset_256x256.zip --resolution=256x256 --cond=1
 
 #Training stylegan, hyperparameters taken from stylegan github repo
-python3 train.py --outdir=/mydata/train_logs --cfg=stylegan2 --data=/mydata/final_dataset/oasisdataset_256x256.zip --gpus=1 --batch=16 --gamma=6.6 --mir>
+python3 train.py --outdir=/mydata/train_logs --cfg=stylegan2 --data=/mydata/final_dataset/oasisdataset_256x256.zip --gpus=1 --batch=16 --gamma=6.6 --mirror=1 --kimg=3000
 
 echo "Training finished"
