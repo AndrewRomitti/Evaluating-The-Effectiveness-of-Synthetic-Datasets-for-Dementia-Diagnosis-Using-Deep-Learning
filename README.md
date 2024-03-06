@@ -2,6 +2,10 @@
 
 This is the code for the paper: Evaluating the Effectiveness of Synthetic Datasets for Dementia Diagnosis for Dementia Diagnosis Using Deep Learning. This paper was presented and published at the 2023 IEEE AIPR Workshop as one of the 15 minute presentations.
 
+Citation: Romitti, Andrew, Jiya Shetty, and Praveen Rao. "Evaluating the Effectiveness of Synthetic Datasets for Dementia Diagnosis Using Deep Learning." 2023 IEEE Applied Imagery Pattern Recognition Workshop (AIPR). IEEE, 2023.
+
+Link: https://www.computer.org/csdl/proceedings-article/aipr/2023/10440719/1UKgJwpsg7u
+
 ## Abstract
 Early and accurate diagnosis of dementia can lead to better treatment of the disease and improve patients' quality of 
 life. Advanced neuroimaging technologies such as magnetic resonance imaging (MRI) and deep learning hold promise for early and accurate dementia diagnosis. However, there is limited number of real-world MRI datasets for training deep-learning 
